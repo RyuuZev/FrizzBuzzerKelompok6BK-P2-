@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FizzBuzz Challenge</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        padding: 20px;
+    }
+
+    .game-container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px 30px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 600px; /* Increased width for a more spacious display */
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .rules-toggle {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 16px;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+    }
+
+    .rules-toggle:hover {
+        background: #5568d3;
+        transform: scale(1.1);
+    }
+
+    .rules-panel {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        text-align: left;
+        color: #333;
+        border: 2px solid #667eea;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.4s ease;
+        transform: translateY(-10px);
+    }
+
+    .rules-panel.show {
+        max-height: 500px;
+        opacity: 1;
+        margin-bottom: 20px;
+        transform: translateY(0);
+    }
+
+    .rules-panel h3 {
+        color: #667eea;
+        margin-bottom: 12px;
+        font-size: 18px;
+    }
+
+    .rules-panel ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .rules-panel li {
+        padding: 6px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .rules-panel li:before {
+        content: "• ";
+        color: #667eea;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+
+    h1 {
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    #number {
+        font-size: 72px;
+        font-weight: bold;
+        margin: 20px 0;
+        color: #667eea;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    #timer {
+        font-size: 20px;
+        margin: 15px 0;
+        font-weight: 600;
+        color: #764ba2;
+    }
+
+    .timer-low {
+        color: #e74c3c !important;
+        animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    .buttons-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    button.option {
+        padding: 15px;
+        border: none;
+        background: #667eea;
+        color: white;
+        font-size: 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    button.option:hover:not(:disabled) {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    button.option:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    button.option:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    #score {
+        margin-top: 15px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .wrong {
+        animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+        75% { transform: translateX(-10px); }
+    }
+
+    .game-over-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+    }
+
+    .game-over-overlay.show {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .game-over-content {
+        transform: scale(0.8);
+        transition: transform 0.5s ease;
+    }
+
+    .game-over-overlay.show .game-over-content {
+        transform: scale(1);
+    }
+
+    .game-over-overlay h2 {
+        color: #e74c3c;
+        font-size: 36px;
+        margin-bottom: 15px;
+    }
+
+    .game-over-overlay .final-score {
+        color: #667eea;
+        font-size: 48px;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+
+    .game-over-overlay .message {
+        color: #555;
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+
+    .restart-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .restart-btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .correct-feedback {
+        animation: correctPulse 0.3s ease;
+    }
+
+    @keyframes correctPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); color: #27ae60; }
+        100% { transform: scale(1); }
+    }
+</style>
+</head>
+<body>
+<div class="game-container">
+    <button class="rules-toggle" onclick="toggleRules()" title="Toggle Rules">?</button>
+    
+    <div id="rules-panel" class="rules-panel">
+        <h3 id="rules-title">Game Rules</h3>
+        <ul id="rules-list">
+            <li id="rule-1">If number divisible by 3 choose "Fizz"</li>
+            <li id="rule-2">If number divisible by 5 choose "Buzz"</li>
+            <li id="rule-3">If divisible by both 3 and 5 choose "FizzBuzz"</li>
+            <li id="rule-4">Otherwise: choose "Number"</li>
+            <li id="rule-5">You have 5 seconds per question</li>
+        </ul>
+    </div>
+
+    <h1 id="game-title">FizzBuzz Challenge</h1>
+
+    <div id="number">1</div>
+    <div id="timer">Time: 5s</div>
+
+    <div class="buttons-container">
+        <button class="option" onclick="submitAnswer('Fizz')">Fizz</button>
+        <button class="option" onclick="submitAnswer('Buzz')">Buzz</button>
+        <button class="option" onclick="submitAnswer('FizzBuzz')">FizzBuzz</button>
+        <button class="option" id="number-btn" onclick="submitAnswer('number')">Number</button>
+    </div>
+
+    <div id="score">Score: 0</div>
+
+    <div id="game-over-overlay" class="game-over-overlay">
+        <div class="game-over-content">
+            <h2 id="game-over-title">Game Over!</h2>
+            <div id="final-score-text" class="message">Your final score:</div>
+            <div class="final-score" id="final-score">0</div>
+            <button class="restart-btn" onclick="restartGame()" id="restart-btn">Play Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let current = 1;
+let score = 0;
+let timeLeft = 5;
+let timer;
+let lang = 'en';
+let isPaused = false;
+let isGameActive = false;
+let usedNumbers = new Set(); // To track used numbers and avoid immediate repeats
+
+const translations = {
+    en: {
+        title: "FizzBuzz Challenge",
+        rulesTitle: "Game Rules",
+        rule1: "If number divisible by 3: choose \"Fizz\"",
+        rule2: "If number divisible by 5: choose \"Buzz\"",
+        rule3: "If divisible by both 3 and 5: choose \"FizzBuzz\"",
+        rule4: "Otherwise: choose \"Number\"",
+        rule5: "You have 5 seconds per question",
+        numberBtn: "Number",
+        score: "Score",
+        time: "Time",
+        gameOver: "Game Over!",
+        finalScoreText: "Your final score:",
+        restart: "Play Again"
+    },
+    id: {
+        title: "Tantangan FizzBuzz",
+        rulesTitle: "Aturan Permainan",
+        rule1: "Jika angka habis dibagi 3 pilih \"Fizz\"",
+        rule2: "Jika angka habis dibagi 5pilih \"Buzz\"",
+        rule3: "Jika habis dibagi 3 dan 5 pilih \"FizzBuzz\"",
+        rule4: "Selain itu: pilih \"Angka\"",
+        rule5: "Anda punya waktu 5 detik per soal",
+        numberBtn: "Angka",
+        score: "Skor",
+        time: "Waktu",
+        gameOver: "Permainan Selesai!",
+        finalScoreText: "Skor akhir Anda:",
+        restart: "Main Lagi"
+    }
+};
+
+function detectLanguage() {
+    const browserLang = navigator.language || navigator.userLanguage;
+    lang = browserLang.toLowerCase().startsWith('id') ? 'id' : 'en';
+    applyTranslations();
+}
+
+function applyTranslations() {
+    const t = translations[lang];
+    document.getElementById('game-title').textContent = t.title;
+    document.getElementById('rules-title').textContent = t.rulesTitle;
+    document.getElementById('rule-1').textContent = t.rule1;
+    document.getElementById('rule-2').textContent = t.rule2;
+    document.getElementById('rule-3').textContent = t.rule3;
+    document.getElementById('rule-4').textContent = t.rule4;
+    document.getElementById('rule-5').textContent = t.rule5;
+    document.getElementById('number-btn').textContent = t.numberBtn;
+    document.getElementById('game-over-title').textContent = t.gameOver;
+    document.getElementById('final-score-text').textContent = t.finalScoreText;
+    document.getElementById('restart-btn').textContent = t.restart;
+    updateUI();
+}
+
+function toggleRules() {
+    const panel = document.getElementById('rules-panel');
+    const isOpening = !panel.classList.contains('show');
+    
+    panel.classList.toggle('show');
+    
+    if (isOpening) {
+        if (isGameActive) {
+            clearInterval(timer);
+            isPaused = true;
+        }
+    } else {
+        if (isPaused && isGameActive) {
+            isPaused = false;
+            resumeTimer();
+        }
+    }
+}
+
+function resumeTimer() {
+    const t = translations[lang];
+    const timerEl = document.getElementById("timer");
+    
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = t.time + ": " + timeLeft + "s";
+
+        if (timeLeft <= 2) {
+            timerEl.classList.add('timer-low');
+        }
+
+        if (timeLeft <= 0) {
+            gameOver();
+        }
+    }, 1000);
+}
+
+function fizzBuzz(n) {
+    if (n % 3 === 0 && n % 5 === 0) return "FizzBuzz";
+    if (n % 3 === 0) return "Fizz";
+    if (n % 5 === 0) return "Buzz";
+    return n.toString();
+}
+
+function generateRandomNumber() {
+    let num;
+    do {
+        num = Math.floor(Math.random() * 100) + 1; // Random number between 1 and 100
+    } while (usedNumbers.has(num));
+    usedNumbers.add(num);
+    return num;
+}
+
+function updateUI() {
+    const t = translations[lang];
+    document.getElementById("number").textContent = current;
+    document.getElementById("score").textContent = t.score + ": " + score;
+}
+
+function startTimer() {
+    timeLeft = 900;
+    isGameActive = true;
+    isPaused = false;
+    const t = translations[lang];
+    const timerEl = document.getElementById("timer");
+    timerEl.textContent = t.time + ": " + timeLeft + "s";
+    timerEl.classList.remove('timer-low');
+
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = t.time + ": " + timeLeft + "s";
+
+        if (timeLeft <= 2) {
+            timerEl.classList.add('timer-low');
+        }
+
+        if (timeLeft <= 0) {
+            gameOver();
+        }
+    }, 1000);
+}
+
+function submitAnswer(choice) {
+    const correct = fizzBuzz(current);
+
+    let chosen = choice;
+    if (choice === "number") chosen = current.toString();
+
+    if (chosen === correct) {
+        score++;
+        current = generateRandomNumber(); // Generate a new random number instead of incrementing
+        
+        const numberEl = document.getElementById("number");
+        numberEl.classList.add('correct-feedback');
+        setTimeout(() => numberEl.classList.remove('correct-feedback'), 300);
+        
+        updateUI();
+        startTimer();
+    } else {
+        wrongAnimation();
+        setTimeout(() => gameOver(), 500);
+    }
+}
+
+function wrongAnimation() {
+    const box = document.querySelector('.game-container');
+    box.classList.add('wrong');
+    setTimeout(() => box.classList.remove('wrong'), 400);
+}
+
+function gameOver() {
+    clearInterval(timer);
+    isGameActive = false;
+    isPaused = false;
+    
+    const buttons = document.querySelectorAll('.option');
+    buttons.forEach(btn => btn.disabled = true);
+    
+    document.getElementById('final-score').textContent = score;
+    
+    setTimeout(() => {
+        document.getElementById('game-over-overlay').classList.add('show');
+    }, 200);
+}
+
+function restartGame() {
+    current = generateRandomNumber(); // Start with a random number
+    score = 0;
+    usedNumbers.clear(); // Reset used numbers
+    usedNumbers.add(current); // Add the starting number
+    
+    const overlay = document.getElementById('game-over-overlay');
+    overlay.classList.remove('show');
+    
+    const buttons = document.querySelectorAll('.option');
+    buttons.forEach(btn => btn.disabled = false);
+    
+    const timerEl = document.getElementById("timer");
+    timerEl.classList.remove('timer-low');
+    
+    updateUI();
+    startTimer();
+}
+
+detectLanguage();
+current = generateRandomNumber(); // Initialize with random number
+usedNumbers.add(current);
+updateUI();
+startTimer();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"a0390557d0a74e56916519ecfb417236","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
